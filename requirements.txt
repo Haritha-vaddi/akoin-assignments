@@ -1,0 +1,5 @@
+langchain-community
+langchain-text-splitters
+transformers
+chromadb
+google-generativeai
