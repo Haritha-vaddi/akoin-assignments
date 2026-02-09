@@ -3,3 +3,4 @@ langchain-text-splitters
 transformers
 chromadb
 google-generativeai
+python-dotenv
