@@ -3,6 +3,7 @@
 import os
 import json
 from pathlib import Path
+from dotenv import load_dotenv
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -10,11 +11,17 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 import google.generativeai as genai
 
+# Load environment variables from .env file
+load_dotenv()
 
 
 
 
-key = "xxxxxxxxxxxxxx"  
+
+# Load API key from environment variable
+key = os.getenv("GEMINI_API_KEY")
+if not key:
+    raise ValueError("GEMINI_API_KEY not found in environment. Please set it in .env file.")
 genai.configure(api_key=key)
 
 PDF_PATH = Path("Chapters 11 & 12  - Disclosures and Reporting.pdf")
@@ -27,9 +34,7 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 
-# ================================
-# METHOD 1: INSERT DATA INTO VECTORDB
-# ================================
+
 
 def insert_data_into_vectordb():
     """Load PDF, chunk it, and add to ChromaDB (run only once)"""
@@ -38,11 +43,7 @@ def insert_data_into_vectordb():
     print("📥 INSERTING DATA INTO VECTOR DB")
     print("="*60)
     
-    # --------------------------------
-    # LOAD DOCUMENT
-    # --------------------------------
-
-    # Check if PDF exists
+    
     if not Path(PDF_PATH).exists():
         print(f"❌ PDF file not found at: {PDF_PATH}")
         print("Please provide a valid PDF path or create a sample PDF.")
@@ -59,9 +60,7 @@ def insert_data_into_vectordb():
         print(f"❌ Error loading PDF: {e}")
         return False
 
-    # --------------------------------
-    # CHUNKING
-    # --------------------------------
+    
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
@@ -70,9 +69,7 @@ def insert_data_into_vectordb():
 
     chunks = text_splitter.split_documents(documents)
 
-    # --------------------------------
-    # VECTOR STORE (CHROMADB)
-    # --------------------------------
+   
 
     print("⏳ Creating vector store...")
     vectorstore = Chroma(
@@ -88,9 +85,7 @@ def insert_data_into_vectordb():
     return True
 
 
-# ================================
-# METHOD 2: QUERY VECTOR DB
-# ================================
+
 
 def query_vectordb(query):
     """Retrieve documents and generate response using Gemini"""
@@ -99,9 +94,7 @@ def query_vectordb(query):
     print(f"🔍 QUERY: {query}")
     print("="*60)
     
-    # --------------------------------
-    # VECTOR STORE & RETRIEVAL
-    # --------------------------------
+   
     
     print("⏳ Loading vector store...")
     vectorstore = Chroma(
@@ -115,9 +108,7 @@ def query_vectordb(query):
     context_text = "\n\n".join(doc.page_content for doc in docs)
     print(f"✅ Retrieved {len(docs)} relevant documents")
 
-    # --------------------------------
-    # GEMINI LLM
-    # --------------------------------
+   
 
     print("⏳ Generating response from Gemini...")
     try:
@@ -152,24 +143,22 @@ Question:
         print("\n✅ Response received:")
         print("="*60)
         try:
-            # Try to parse as JSON and pretty print
+            
             parsed = json.loads(response_text)
             print(json.dumps(parsed, indent=2))
         except json.JSONDecodeError:
-            # If not valid JSON, print as plain text
+          
             print(response_text)
         print("="*60 + "\n")
     except Exception as e:
         print(f"❌ Error generating response: {e}")
 
 
-# ================================
-# MAIN
-# ================================
+
 
 if __name__ == "__main__":
     
-    # Check if vector DB already exists
+    
     db_exists = Path(CHROMA_DB_DIR).exists()
     
     if not db_exists:
@@ -178,9 +167,11 @@ if __name__ == "__main__":
     else:
         print("✅ Vector DB already exists. Skipping data insertion.")
     
-    # Take query from user
+   
     print("\n" + "="*60)
     query = input("📝 Enter your query: ").strip()
+   
+
     print("="*60)
     
     if query:
